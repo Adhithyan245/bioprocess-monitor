@@ -93,8 +93,8 @@ TRADEOFF_KS = [3, 4, 5, 7, 10, 20, 40, 70, 110]
 
 
 def tradeoff(conn, scored: pd.DataFrame, settings: monitoring.Settings, ks=TRADEOFF_KS) -> pd.DataFrame:
-    """Detection vs false alarms if the same k were used for both methods.
-    For reporting only: no threshold is chosen from this table."""
+    """Detection vs false alarms if one k were shared by every sensor and both
+    methods. For reporting only: no threshold is chosen from this table."""
     rows = []
     for k in ks:
         s2 = monitoring.Settings(**{**settings.__dict__, "sigma_k": k, "ewma_k": k})
@@ -145,15 +145,23 @@ def write_report(conn, scored: pd.DataFrame, source: str, settings: monitoring.S
         f"EWMA {rates['ewma_flag_rate']:.2%} of {rates['readings']:,} readings "
         "(flags are single points; alarms need 3 in a row)", "",
         "## Thresholds used", "",
-        "Calibrated by leave-one-out on baseline batches only (never below the textbook value):", "",
-        _md_table(db.read_table(conn, "SELECT * FROM calibration")) if _has_rows(conn, "calibration")
+        "One k per sensor and method, calibrated by leave-one-out on baseline batches only, "
+        f"so that across all sensors together at most {settings.target_false_alarm_rate:.0%} of "
+        "baseline batches would alarm (never below the textbook value). The last two columns "
+        "count baseline batches that would alarm on that sensor at each k.", "",
+        _md_table(db.read_table(conn, """
+            SELECT method, sensor, textbook_k, calibrated_k,
+                   baseline_alarming_at_textbook   AS alarming_at_textbook,
+                   baseline_alarming_at_calibrated AS alarming_at_calibrated
+            FROM calibration ORDER BY method DESC, sensor""")) if _has_rows(conn, "calibration")
         else "Textbook thresholds (calibration disabled).", "",
         "## Fault batches", "", _md_table(fault), "",
         "## Normal test batches with false alarms", "",
         _md_table(normal_fa) if len(normal_fa) else "None.", "",
         "## Trade-off: what other thresholds would have given", "",
-        "Same k for Shewhart and EWMA, scored on the same test batches. Shown for "
-        "transparency only; the thresholds above were NOT chosen from this table.", "",
+        "If ONE k were shared by every sensor and both methods (the previous approach), "
+        "scored on the same test batches. Shown for transparency only; the thresholds "
+        "above were NOT chosen from this table.", "",
         _md_table(tradeoff(conn, scored, settings)), "",
     ]
     REPORT_DIR.mkdir(exist_ok=True)

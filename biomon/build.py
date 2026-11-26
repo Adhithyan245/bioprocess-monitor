@@ -47,17 +47,21 @@ def build(source: str, path: Path | None = None, data=None, cfg: dict | None = N
     if settings.calibrate:
         textbook = settings
         settings, crit = monitoring.calibrate(readings, baseline, min_sigma, settings, smoothing)
-        cal = pd.DataFrame([
-            {"method": m, "textbook_k": tk, "calibrated_k": ck, "n_baseline": len(crit),
-             "baseline_alarming_at_textbook": int((crit[m] > tk).sum()),
-             "target_rate": settings.target_false_alarm_rate}
-            for m, tk, ck in (("shewhart", textbook.sigma_k, settings.sigma_k),
-                              ("ewma", textbook.ewma_k, settings.ewma_k))])
+        rows = []
+        for m in monitoring.METHODS:
+            for sensor, c in crit.groupby("sensor")[m]:
+                tk, ck = textbook.k(m, sensor), settings.k(m, sensor)
+                rows.append({"method": m, "sensor": sensor, "textbook_k": tk, "calibrated_k": ck,
+                             "n_baseline": int(c.size),
+                             "baseline_alarming_at_textbook": int((c > tk).sum()),
+                             "baseline_alarming_at_calibrated": int((c > ck).sum()),
+                             "target_rate": settings.target_false_alarm_rate})
+        cal = pd.DataFrame(rows)
         db.write_table(conn, "calibration", cal, list(cal.columns))
     limits = monitoring.control_limits(readings, baseline, min_sigma, settings, smoothing)
     db.write_table(conn, "control_limits", limits,
-                   ["sensor", "t_idx", "t_hours", "n_batches", "mean", "sd", "lcl", "ucl",
-                    "ewma_mean", "ewma_sd", "ewma_lcl", "ewma_ucl"])
+                   ["sensor", "t_idx", "t_hours", "n_batches", "mean", "sd", "k_shewhart", "k_ewma",
+                    "lcl", "ucl", "ewma_mean", "ewma_sd", "ewma_lcl", "ewma_ucl"])
 
     scored = monitoring.evaluate(readings, limits, settings)
     alarms = monitoring.alarm_events(scored, settings)
@@ -66,10 +70,11 @@ def build(source: str, path: Path | None = None, data=None, cfg: dict | None = N
 
 
 def settings_from_db(conn, cfg: dict | None = None) -> monitoring.Settings:
-    """Monitoring settings with the calibrated thresholds stored in the database."""
+    """Monitoring settings with the calibrated per-sensor thresholds stored in the database."""
     s = monitoring.Settings.from_config(cfg or db.load_config())
-    for method, k in conn.execute("SELECT method, calibrated_k FROM calibration"):
-        s = monitoring.Settings(**{**s.__dict__, ("sigma_k" if method == "shewhart" else "ewma_k"): k})
+    rows = conn.execute("SELECT method, sensor, calibrated_k FROM calibration").fetchall()
+    for method in monitoring.METHODS:
+        s = s.with_k(method, {sensor: k for m, sensor, k in rows if m == method})
     return s
 
 

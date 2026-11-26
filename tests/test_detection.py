@@ -109,14 +109,28 @@ def test_step_fault_is_in_spec_but_out_of_control(synth):
 
 def test_calibration_never_below_textbook(synth, cfg):
     s = synth["settings"]
-    assert s.sigma_k >= cfg["monitoring"]["sigma_k"]
-    assert s.ewma_k >= cfg["monitoring"]["ewma_k"]
+    assert set(s.shewhart_k_by_sensor) == set(synthetic.SENSORS)
+    assert min(s.shewhart_k_by_sensor.values()) >= cfg["monitoring"]["sigma_k"]
+    assert min(s.ewma_k_by_sensor.values()) >= cfg["monitoring"]["ewma_k"]
+
+
+def test_per_sensor_k_keeps_overall_baseline_budget():
+    """Choosing a k per sensor must still keep the COMBINED share of baseline
+    batches that would alarm within the target (here 1 of 20)."""
+    rng = np.random.default_rng(0)
+    crit = pd.DataFrame([{"batch_id": f"B{i}", "sensor": s, "shewhart": rng.gamma(2, 1.2)}
+                         for i in range(20) for s in ("a", "b", "c")])
+    ks = monitoring.choose_sensor_k(crit, "shewhart", 3.0, 0.05)
+    wide = crit.pivot(index="batch_id", columns="sensor", values="shewhart")
+    assert (wide > pd.Series(ks)).any(axis=1).sum() <= 1
+    assert min(ks.values()) >= 3.0
 
 
 @pytest.mark.xfail(strict=True, reason=(
-    "Known limitation: measured 12% of fresh normal batches with a false alarm "
-    "(target 5%, bound 10%). Calibrating from only 20 baseline batches lets just "
-    "1 batch alarm, so k comes from a noisy estimate and is slightly too low. "
+    "Known limitation: measured 16% of fresh normal batches with a false alarm "
+    "(target 5%, bound 10%; it was 12% with one shared k). Calibrating from only "
+    "20 baseline batches lets just 1 batch alarm, so each sensor's k comes from a "
+    "noisy estimate and is slightly too low. "
     "strict=True: if this starts passing, pytest reports it so the README can be updated."))
 def test_false_alarm_rate_on_fresh_normal_batches(synth, cfg):
     """100 new normal batches (different seed, never seen by the calibration).

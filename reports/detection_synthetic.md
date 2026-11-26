@@ -9,16 +9,22 @@ Only held-out test batches are scored; baseline batches were used to learn the l
 - Faulty batches detected: **10 of 10**
 - Normal batches with at least one false alarm: **3 of 10**
 - Median detection delay after fault onset: **4.9 h**
-- Point-level flag rate on normal test batches: Shewhart 0.86%, EWMA 1.07% of 16,019 readings (flags are single points; alarms need 3 in a row)
+- Point-level flag rate on normal test batches: Shewhart 0.86%, EWMA 1.08% of 16,019 readings (flags are single points; alarms need 3 in a row)
 
 ## Thresholds used
 
-Calibrated by leave-one-out on baseline batches only (never below the textbook value):
+One k per sensor and method, calibrated by leave-one-out on baseline batches only, so that across all sensors together at most 5% of baseline batches would alarm (never below the textbook value). The last two columns count baseline batches that would alarm on that sensor at each k.
 
-| method | textbook_k | calibrated_k | n_baseline | baseline_alarming_at_textbook | target_rate |
+| method | sensor | textbook_k | calibrated_k | alarming_at_textbook | alarming_at_calibrated |
 |---|---|---|---|---|---|
-| shewhart | 3 | 3 | 20 | 1 | 0.05 |
-| ewma | 3 | 3.68 | 20 | 3 | 0.05 |
+| shewhart | agitation | 3 | 3 | 1 | 1 |
+| shewhart | dissolved_oxygen | 3 | 3 | 0 | 0 |
+| shewhart | ph | 3 | 3 | 0 | 0 |
+| shewhart | temperature | 3 | 3 | 0 | 0 |
+| ewma | agitation | 3 | 4.26 | 2 | 0 |
+| ewma | dissolved_oxygen | 3 | 3 | 0 | 0 |
+| ewma | ph | 3 | 3.68 | 2 | 0 |
+| ewma | temperature | 3 | 3 | 0 | 0 |
 
 ## Fault batches
 
@@ -28,8 +34,8 @@ Calibrated by leave-one-out on baseline batches only (never below the textbook v
 | SYN-032 | cooling_failure | temperature | 42 | True | shewhart (temperature) | 0 | 0 |
 | SYN-033 | base_pump_drift | ph | 42.5 | True | ewma (ph) | 4 | 0 |
 | SYN-034 | base_pump_drift | ph | 48.5 | True | ewma (ph) | 8.75 | 0 |
-| SYN-035 | do_probe_fouling | dissolved_oxygen | 41.8 | True | shewhart (dissolved_oxygen) | 33.2 | 1 |
-| SYN-036 | do_probe_fouling | dissolved_oxygen | 60 | True | shewhart (dissolved_oxygen) | 19.5 | 0 |
+| SYN-035 | do_probe_fouling | dissolved_oxygen | 41.8 | True | ewma (dissolved_oxygen) | 30 | 1 |
+| SYN-036 | do_probe_fouling | dissolved_oxygen | 60 | True | ewma (dissolved_oxygen) | 17.5 | 0 |
 | SYN-037 | agitator_stall | agitation | 30.2 | True | shewhart (agitation) | 9.75 | 0 |
 | SYN-038 | agitator_stall | agitation | 45.8 | True | shewhart (agitation) | 5.75 | 0 |
 | SYN-039 | sensor_dropout | dissolved_oxygen | 69.2 | True | missing-data | 0 | 0 |
@@ -45,7 +51,7 @@ Calibrated by leave-one-out on baseline batches only (never below the textbook v
 
 ## Trade-off: what other thresholds would have given
 
-Same k for Shewhart and EWMA, scored on the same test batches. Shown for transparency only; the thresholds above were NOT chosen from this table.
+If ONE k were shared by every sensor and both methods (the previous approach), scored on the same test batches. Shown for transparency only; the thresholds above were NOT chosen from this table.
 
 | k | faults_detected | normal_batches_false_alarm |
 |---|---|---|

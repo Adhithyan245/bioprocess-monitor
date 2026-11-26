@@ -77,8 +77,8 @@ with tab_batch:
     faults = q(source, "SELECT * FROM faults WHERE batch_id = :b", b=batch_id)
     alarms = q(source, "SELECT * FROM alarms WHERE batch_id = :b ORDER BY start_h", b=batch_id)
     sensors = q(source, "SELECT * FROM sensor_limits")
-    cal = q(source, "SELECT method, calibrated_k FROM calibration")
-    k = dict(zip(cal.method, cal.calibrated_k))
+    cal = q(source, "SELECT method, sensor, calibrated_k FROM calibration")
+    k = {(r.method, r.sensor): r.calibrated_k for r in cal.itertuples()}  # per-sensor thresholds
 
     st.subheader(f"Batch {batch_id}")
     c1, c2, c3, c4 = st.columns(4)
@@ -87,8 +87,8 @@ with tab_batch:
     c3.metric("Alarm events", len(alarms))
     c4.metric("Missing readings",
               int(named_query(source, "batch_summary", batch_id)["n_missing"].sum()))
-    st.caption(f"{info.notes}. Control band: mean ± {k.get('shewhart', 3):g}σ of baseline batches; "
-               f"EWMA band: ± {k.get('ewma', 3):g}σ. An alarm = 3+ consecutive flagged points.")
+    st.caption(f"{info.notes}. Control band: mean ± kσ of baseline batches, with k set per sensor "
+               "(shown in each chart title). An alarm = 3+ consecutive flagged points.")
     if len(faults):
         st.markdown("**Known fault(s)** (answer key): " + "; ".join(
             f"{f.kind} on {f.sensor or 'process'} from {f.start_h:g} h to {f.end_h:g} h"
@@ -107,8 +107,9 @@ with tab_batch:
                                  line=dict(width=0), name="Control band", hoverinfo="skip"), 1, 1)
         fig.add_trace(go.Scatter(x=d.t_hours, y=d["mean"], line=dict(color=COLORS["mean"], dash="dash", width=1),
                                  name="Baseline mean"), 1, 1)
-        wide = k.get("shewhart", 3) > 3
-        if wide:  # show the textbook band for context when calibration widened it
+        k_sh = k.get(("shewhart", srow.sensor), 3.0)
+        k_ew = k.get(("ewma", srow.sensor), 3.0)
+        if k_sh > 3:  # show the textbook band for context when calibration widened it
             for i, sign in enumerate((1, -1)):
                 fig.add_trace(go.Scatter(x=d.t_hours, y=d["mean"] + sign * 3 * d["sd"],
                                          line=dict(color=COLORS["mean"], dash="dot", width=1),
@@ -151,7 +152,8 @@ with tab_batch:
         for f in faults.itertuples():
             if f.sensor in (None, srow.sensor) or pd.isna(f.sensor):
                 fig.add_vrect(x0=f.start_h, x1=f.end_h, fillcolor=COLORS["fault"], line_width=0)
-        fig.update_layout(title=f"{srow.label} ({srow.unit})", height=420 if show_ewma else 320,
+        fig.update_layout(title=f"{srow.label} ({srow.unit}) · band ±{k_sh:g}σ · EWMA band ±{k_ew:g}σ",
+                          height=420 if show_ewma else 320,
                           margin=dict(l=10, r=10, t=40, b=10), hovermode="x unified",
                           legend=dict(orientation="h", y=-0.15))
         fig.update_xaxes(title_text="Hours from batch start", row=rows, col=1)

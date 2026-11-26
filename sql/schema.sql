@@ -49,6 +49,8 @@ CREATE TABLE IF NOT EXISTS control_limits (
     n_batches  INTEGER NOT NULL,
     mean       REAL    NOT NULL,
     sd         REAL    NOT NULL,
+    k_shewhart REAL    NOT NULL,          -- threshold used for this sensor
+    k_ewma     REAL    NOT NULL,
     lcl        REAL    NOT NULL,
     ucl        REAL    NOT NULL,
     ewma_mean  REAL,
@@ -58,14 +60,19 @@ CREATE TABLE IF NOT EXISTS control_limits (
     PRIMARY KEY (sensor, t_idx)
 ) WITHOUT ROWID;
 
--- Thresholds actually used, and how they were chosen.
+-- Thresholds actually used (one per method and sensor), and how they were chosen.
+-- baseline_alarming_*: baseline batches that would alarm on this sensor in
+-- leave-one-out at the textbook k, and at the calibrated k.
 CREATE TABLE IF NOT EXISTS calibration (
-    method          TEXT PRIMARY KEY CHECK (method IN ('shewhart', 'ewma')),
+    method          TEXT NOT NULL CHECK (method IN ('shewhart', 'ewma')),
+    sensor          TEXT NOT NULL,
     textbook_k      REAL NOT NULL,
     calibrated_k    REAL NOT NULL,
     n_baseline      INTEGER NOT NULL,
-    baseline_alarming_at_textbook INTEGER NOT NULL,
-    target_rate     REAL NOT NULL
+    baseline_alarming_at_textbook   INTEGER NOT NULL,
+    baseline_alarming_at_calibrated INTEGER NOT NULL,
+    target_rate     REAL NOT NULL,
+    PRIMARY KEY (method, sensor)
 );
 
 -- Alarm events found by the monitoring step: runs of consecutive flagged points.
