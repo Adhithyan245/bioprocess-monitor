@@ -6,10 +6,10 @@ Only held-out test batches are scored; baseline batches were used to learn the l
 
 ## Summary
 
-- Faulty batches detected: **2 of 10**
+- Faulty batches detected: **5 of 10**
 - Normal batches with at least one false alarm: **0 of 45**
-- Median detection delay after fault onset: **67.0 h**
-- Point-level flag rate on normal test batches: Shewhart 0.00%, EWMA 0.00% of 207,000 readings (flags are single points; alarms need 3 in a row)
+- Median detection delay after fault onset: **0.2 h**
+- Point-level flag rate on normal test batches: Shewhart 0.00%, EWMA 0.00% of 310,500 readings (flags are single points; alarms need 3 in a row)
 
 ## Thresholds used
 
@@ -27,13 +27,13 @@ Calibrated by leave-one-out on baseline batches only (never below the textbook v
 | IPS-091 | process_fault |  | 20 | False |  |  | 0 |
 | IPS-092 | process_fault |  | 80 | True | ewma (ph) | 66.2 | 0 |
 | IPS-093 | process_fault |  | 70 | False |  |  | 0 |
-| IPS-094 | process_fault |  | 20 | False |  |  | 0 |
+| IPS-094 | process_fault |  | 20 | True | ewma (aeration) | 0.2 | 0 |
 | IPS-095 | process_fault |  | 20 | False |  |  | 0 |
 | IPS-096 | process_fault |  | 70 | False |  |  | 0 |
 | IPS-097 | process_fault |  | 20 | False |  |  | 0 |
 | IPS-098 | process_fault |  | 80 | True | ewma (ph) | 67.8 | 0 |
-| IPS-099 | process_fault |  | 20 | False |  |  | 0 |
-| IPS-100 | process_fault |  | 20 | False |  |  | 0 |
+| IPS-099 | process_fault |  | 20 | True | ewma (aeration) | 0.2 | 0 |
+| IPS-100 | process_fault |  | 20 | True | ewma (aeration) | 0.2 | 0 |
 
 ## Normal test batches with false alarms
 
@@ -48,9 +48,9 @@ Same k for Shewhart and EWMA, scored on the same test batches. Shown for transpa
 | 3 | 10/10 | 38/45 |
 | 4 | 10/10 | 25/45 |
 | 5 | 9/10 | 20/45 |
-| 7 | 6/10 | 11/45 |
-| 10 | 4/10 | 8/45 |
-| 20 | 4/10 | 3/45 |
-| 40 | 4/10 | 0/45 |
-| 70 | 2/10 | 0/45 |
-| 110 | 2/10 | 0/45 |
+| 7 | 7/10 | 11/45 |
+| 10 | 7/10 | 8/45 |
+| 20 | 7/10 | 3/45 |
+| 40 | 7/10 | 0/45 |
+| 70 | 5/10 | 0/45 |
+| 110 | 5/10 | 0/45 |

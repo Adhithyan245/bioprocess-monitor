@@ -22,12 +22,14 @@
     },
     "indpensim": {
       "sample_interval_h": 0.2,
-      "_comment": "Illustrative spec limits chosen for this project, not values from the IndPenSim authors. IndPenSim holds agitation constant at 100 rpm.",
+      "_comment": "Illustrative spec limits chosen for this project, not values from the IndPenSim authors. IndPenSim holds agitation constant at 100 rpm. Aeration and pressure follow recipe steps, so their limits are not smoothed over time (smoothing_window 1).",
       "sensors": {
         "temperature":      {"label": "Temperature",      "unit": "degC", "low": 24.0, "high": 26.0, "min_sigma": 0.02},
         "ph":               {"label": "pH",               "unit": "pH",   "low": 6.30, "high": 6.70, "min_sigma": 0.005},
         "dissolved_oxygen": {"label": "Dissolved oxygen", "unit": "mg/L", "low": 6.0,  "high": 20.0, "min_sigma": 0.1},
-        "agitation":        {"label": "Agitation",        "unit": "rpm",  "low": 90.0, "high": 110.0, "min_sigma": 1.0}
+        "agitation":        {"label": "Agitation",        "unit": "rpm",  "low": 90.0, "high": 110.0, "min_sigma": 1.0},
+        "aeration":         {"label": "Aeration rate",    "unit": "L/h",  "low": 25.0, "high": 80.0,  "min_sigma": 1.0,  "smoothing_window": 1},
+        "pressure":         {"label": "Head pressure",    "unit": "bar",  "low": 0.5,  "high": 1.2,   "min_sigma": 0.01, "smoothing_window": 1}
       }
     }
   }

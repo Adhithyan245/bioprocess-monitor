@@ -43,9 +43,10 @@ def build(source: str, path: Path | None = None, data=None, cfg: dict | None = N
 
     baseline = batches.loc[batches.role == "baseline", "batch_id"]
     min_sigma = {s: c.get("min_sigma", 0.0) for s, c in ds["sensors"].items()}
+    smoothing = {s: c["smoothing_window"] for s, c in ds["sensors"].items() if "smoothing_window" in c}
     if settings.calibrate:
         textbook = settings
-        settings, crit = monitoring.calibrate(readings, baseline, min_sigma, settings)
+        settings, crit = monitoring.calibrate(readings, baseline, min_sigma, settings, smoothing)
         cal = pd.DataFrame([
             {"method": m, "textbook_k": tk, "calibrated_k": ck, "n_baseline": len(crit),
              "baseline_alarming_at_textbook": int((crit[m] > tk).sum()),
@@ -53,7 +54,7 @@ def build(source: str, path: Path | None = None, data=None, cfg: dict | None = N
             for m, tk, ck in (("shewhart", textbook.sigma_k, settings.sigma_k),
                               ("ewma", textbook.ewma_k, settings.ewma_k))])
         db.write_table(conn, "calibration", cal, list(cal.columns))
-    limits = monitoring.control_limits(readings, baseline, min_sigma, settings)
+    limits = monitoring.control_limits(readings, baseline, min_sigma, settings, smoothing)
     db.write_table(conn, "control_limits", limits,
                    ["sensor", "t_idx", "t_hours", "n_batches", "mean", "sd", "lcl", "ucl",
                     "ewma_mean", "ewma_sd", "ewma_lcl", "ewma_ucl"])

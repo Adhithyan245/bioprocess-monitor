@@ -24,11 +24,13 @@ CSV_IN_ZIP = "Mendeley_data/100_Batches_IndPenSim_V3.csv"
 # We read by position, not by name: the CSV header has 2,239 names but each
 # data row has 2,237 fields (header "1- No Raman spec, 1-Raman spec recorded"
 # was split at its comma, among others), so names after column 32 are shifted.
-# Positions 0-32 match the header; 35 (batch number) and 37 (fault flag) were
-# identified from the data itself (35 increments at every time reset).
+# Positions 0-32 match the header; 35 (batch number) was identified from the
+# data itself (it increments at every time reset).
 COLUMNS = {
     0: "t_hours",            # Time (h)
+    1: "aeration",           # Aeration rate Fg (L/h)
     2: "agitation",          # Agitator RPM
+    9: "pressure",           # Air head pressure (bar)
     12: "dissolved_oxygen",  # Dissolved oxygen concentration (mg/L)
     16: "ph",                # pH
     17: "temperature",       # Temperature (K)
@@ -38,7 +40,7 @@ COLUMNS = {
 }
 # Note: the column headed "Fault flag" is not a 0/1 flag in the data (it holds
 # large counter-like values), so the fault answer key comes from fault_ref.
-SENSORS = ["temperature", "ph", "dissolved_oxygen", "agitation"]
+SENSORS = ["temperature", "ph", "dissolved_oxygen", "agitation", "aeration", "pressure"]
 
 
 def extract(raw_zip: Path = RAW_ZIP, out: Path = EXTRACT) -> pd.DataFrame:

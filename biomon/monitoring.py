@@ -55,16 +55,26 @@ def _add_ewma(df: pd.DataFrame, lam: float) -> pd.DataFrame:
     return df
 
 
+def _smooth_per_sensor(df: pd.DataFrame, cols: list[str], default: int,
+                       windows: dict[str, int] | None) -> pd.DataFrame:
+    """Smooth each sensor with its own window (e.g. 1 = none, for stepped set-point signals)."""
+    windows = windows or {}
+    parts = [_smooth(g.copy(), cols, windows.get(sensor, default))
+             for sensor, g in df.groupby("sensor", sort=False)]
+    return pd.concat(parts) if parts else df
+
+
 def control_limits(readings: pd.DataFrame, baseline_ids, min_sigma: dict[str, float],
-                   s: Settings) -> pd.DataFrame:
-    """Learn time-varying Shewhart and EWMA limits from baseline (known-good) batches."""
+                   s: Settings, smoothing: dict[str, int] | None = None) -> pd.DataFrame:
+    """Learn time-varying Shewhart and EWMA limits from baseline (known-good) batches.
+    `smoothing` optionally overrides the smoothing window per sensor."""
     base = readings[readings["batch_id"].isin(set(baseline_ids))]
     lim = (base.groupby(["sensor", "t_idx"])
                .agg(t_hours=("t_hours", "first"), n_batches=("value", "count"),
                     mean=("value", "mean"), sd=("value", "std"))
                .reset_index())
     lim = lim[lim["n_batches"] >= s.min_baseline_batches].copy()
-    lim = _smooth(lim, ["mean", "sd"], s.smoothing_window)
+    lim = _smooth_per_sensor(lim, ["mean", "sd"], s.smoothing_window, smoothing)
     lim["sd"] = np.maximum(lim["sd"], lim["sensor"].map(min_sigma).fillna(0))
     lim["lcl"] = lim["mean"] - s.sigma_k * lim["sd"]
     lim["ucl"] = lim["mean"] + s.sigma_k * lim["sd"]
@@ -79,7 +89,7 @@ def control_limits(readings: pd.DataFrame, baseline_ids, min_sigma: dict[str, fl
     e = (z.groupby(["sensor", "t_idx"])["ewma"].agg(ewma_mean="mean", ewma_sd="std")
           .reset_index())
     lim = lim.merge(e, on=["sensor", "t_idx"], how="left")
-    lim = _smooth(lim, ["ewma_mean", "ewma_sd"], s.smoothing_window)
+    lim = _smooth_per_sensor(lim, ["ewma_mean", "ewma_sd"], s.smoothing_window, smoothing)
     lim["ewma_sd"] = np.maximum(lim["ewma_sd"].fillna(0.05), 0.05)
     lim["ewma_lcl"] = lim["ewma_mean"] - s.ewma_k * lim["ewma_sd"]
     lim["ewma_ucl"] = lim["ewma_mean"] + s.ewma_k * lim["ewma_sd"]
@@ -114,7 +124,7 @@ def _critical_values(df: pd.DataFrame, min_run: int) -> dict[str, float]:
 
 
 def calibrate(readings: pd.DataFrame, baseline_ids, min_sigma: dict[str, float],
-              s: Settings) -> tuple[Settings, pd.DataFrame]:
+              s: Settings, smoothing: dict[str, int] | None = None) -> tuple[Settings, pd.DataFrame]:
     """Leave-one-out calibration on baseline batches only (test data is never used).
 
     For each baseline batch, learn limits from the OTHER baseline batches and
@@ -125,7 +135,7 @@ def calibrate(readings: pd.DataFrame, baseline_ids, min_sigma: dict[str, float],
     ids = list(baseline_ids)
     rows = []
     for b in ids:
-        lim = control_limits(readings, [x for x in ids if x != b], min_sigma, s)
+        lim = control_limits(readings, [x for x in ids if x != b], min_sigma, s, smoothing)
         std = _standardize(readings[readings["batch_id"] == b], lim, s)
         rows.append({"batch_id": b, **_critical_values(std, s.min_run)})
     crit = pd.DataFrame(rows)
