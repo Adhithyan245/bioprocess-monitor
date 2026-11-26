@@ -1,0 +1,34 @@
+{
+  "_comment": "Spec limits (low/high) are the acceptable operating range for each sensor. Control limits are NOT set here: they are learned from good batches. min_sigma stops a control band collapsing to zero width when a sensor barely moves.",
+  "monitoring": {
+    "sigma_k": 3.0,
+    "ewma_lambda": 0.2,
+    "ewma_k": 3.0,
+    "min_run": 3,
+    "min_baseline_batches": 5,
+    "smoothing_window": 5,
+    "calibrate": true,
+    "target_false_alarm_rate": 0.05
+  },
+  "datasets": {
+    "synthetic": {
+      "sample_interval_h": 0.25,
+      "sensors": {
+        "temperature":      {"label": "Temperature",      "unit": "degC", "low": 29.0,  "high": 31.0,  "min_sigma": 0.02},
+        "ph":               {"label": "pH",               "unit": "pH",   "low": 6.70,  "high": 7.20,  "min_sigma": 0.005},
+        "dissolved_oxygen": {"label": "Dissolved oxygen", "unit": "% sat","low": 20.0,  "high": 105.0, "min_sigma": 0.5},
+        "agitation":        {"label": "Agitation",        "unit": "rpm",  "low": 250.0, "high": 700.0, "min_sigma": 2.0}
+      }
+    },
+    "indpensim": {
+      "sample_interval_h": 0.2,
+      "_comment": "Illustrative spec limits chosen for this project, not values from the IndPenSim authors. IndPenSim holds agitation constant at 100 rpm.",
+      "sensors": {
+        "temperature":      {"label": "Temperature",      "unit": "degC", "low": 24.0, "high": 26.0, "min_sigma": 0.02},
+        "ph":               {"label": "pH",               "unit": "pH",   "low": 6.30, "high": 6.70, "min_sigma": 0.005},
+        "dissolved_oxygen": {"label": "Dissolved oxygen", "unit": "mg/L", "low": 6.0,  "high": 20.0, "min_sigma": 0.1},
+        "agitation":        {"label": "Agitation",        "unit": "rpm",  "low": 90.0, "high": 110.0, "min_sigma": 1.0}
+      }
+    }
+  }
+}

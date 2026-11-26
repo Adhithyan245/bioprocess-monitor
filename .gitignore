@@ -1,0 +1,7 @@
+# Raw IndPenSim download (~504 MB): re-download, see README
+data/raw/
+# Databases are rebuilt by `python -m biomon.build`
+data/*.db
+__pycache__/
+.pytest_cache/
+.claude/
