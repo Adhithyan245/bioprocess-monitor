@@ -11,6 +11,12 @@ IndPenSim batches. Each chart shows the band where a normal batch
 usually sits, the points that left it, the alarms raised, and any missing
 readings. Tables summarise each batch.
 
+![The dashboard showing IndPenSim batch IPS-093: the temperature reading climbs out of its normal band during the labelled fault window (70 to 90 h, shaded red) and is marked with red alarm crosses; the EWMA drift panel below rises at the same time.](docs/dashboard.png)
+
+*Batch IPS-093, a held-out faulty batch. Temperature leaves its normal band
+inside the labelled fault window (shaded) and raises an alarm (red crosses);
+the EWMA panel below tracks the same drift.*
+
 **Try it online:** [bioprocess-monitor.streamlit.app](https://bioprocess-monitor.streamlit.app)
 (free hosting: if the app has been asleep, click to wake it; a cold start
 spends about a minute building the databases).
@@ -331,6 +337,7 @@ biomon/report.py           Scores alarms against the answer key
 tests/                     pytest validation
 reports/                   Generated detection results
 data/                      IndPenSim extract (+ generated databases)
+docs/                      README screenshot
 ```
 
 ## 7. Glossary
