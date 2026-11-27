@@ -337,3 +337,9 @@ data/                      IndPenSim extract (+ generated databases)
 - **Spec limits:** the acceptable range set by people.
 - **False alarm:** an alarm on a batch that was actually fine.
 - **Detection delay:** time from when a fault started to the first alarm.
+
+## License
+
+The code is released under the [MIT License](LICENSE). The bundled IndPenSim
+extract (`data/indpensim_extract.csv.gz`) keeps its original CC BY 4.0 licence;
+see [section 1](#1-the-data) for the source and citation.
