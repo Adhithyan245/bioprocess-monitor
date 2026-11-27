@@ -44,11 +44,28 @@ def scored_batch(source: str, batch_id: str) -> pd.DataFrame:
     return monitoring.evaluate(readings, limits, settings)
 
 
+@st.cache_resource(show_spinner=False)
+def ensure_database(source: str) -> bool:
+    """Build a missing database once per server (e.g. on a fresh cloud deploy, where
+    the generated .db files are not in git). Built under a temporary name and then
+    renamed, so a half-written file is never served."""
+    path = db.db_path(source)
+    if not path.exists():
+        tmp = path.with_suffix(".building.db")
+        conn, _, _ = build.build(source, tmp)
+        conn.close()
+        tmp.replace(path)
+    return True
+
+
 # ---------- sidebar ----------
+missing = [s for s in SOURCES if not db.db_path(s).exists()]
+if missing:
+    with st.spinner("First start: building the monitoring databases from the bundled data "
+                    "(about a minute)..."):
+        for s in missing:
+            ensure_database(s)
 available = [s for s in SOURCES if db.db_path(s).exists()]
-if not available:
-    st.error("No database found. Run `python -m biomon.build` first (see README).")
-    st.stop()
 
 with st.sidebar:
     st.header("Bioprocess Monitor")
