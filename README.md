@@ -341,5 +341,5 @@ data/                      IndPenSim extract (+ generated databases)
 ## License
 
 The code is released under the [MIT License](LICENSE). The bundled IndPenSim
-extract (`data/indpensim_extract.csv.gz`) keeps its original CC BY 4.0 licence;
+extract (`data/indpensim_extract.csv.gz`) keeps its original CC BY 4.0 licence ([data/LICENSE-DATA.txt](data/LICENSE-DATA.txt));
 see [section 1](#1-the-data) for the source and citation.

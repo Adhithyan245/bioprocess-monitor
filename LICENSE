@@ -19,15 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----------------------------------------------------------------------------
-
-Third-party data
-
-data/indpensim_extract.csv.gz is NOT covered by the MIT License above. It is a
-subset of the IndPenSim dataset by Goldrick et al. (Mendeley Data,
-doi:10.17632/pdnjz7zz5x.2), licensed under Creative Commons Attribution 4.0
-International (CC BY 4.0): https://creativecommons.org/licenses/by/4.0/
-Changes made: only 10 of the original columns are kept, the batch-number
-column is read by position, and temperature is converted from kelvin to
-degrees Celsius.
